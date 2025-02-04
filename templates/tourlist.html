@@ -1,0 +1,18 @@
+<!-- templates/tourlist.html -->
+{% extends "base.html" %} {% block content %}
+<h2>Tour: {{ tourname }}</h2>
+<p>Start Date: {{ startdate }}</p>
+<h3>Customer List</h3>
+{% if customerlist %}
+<ul>
+  {% for customer in customerlist %}
+  <li>
+    <!-- You could add a link here for a booking overview -->
+    {{ customer.familyname }}, {{ customer.firstname }} (DOB: {{ customer.dob
+    }})
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No customers found on this tour.</p>
+{% endif %} {% endblock %}

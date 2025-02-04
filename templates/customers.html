@@ -1,0 +1,27 @@
+<!-- templates/customers.html -->
+{% extends "base.html" %} {% block content %}
+<h2>Customers</h2>
+{% if customers %}
+<table border="1">
+  <tr>
+    <th>ID</th>
+    <th>First Name</th>
+    <th>Family Name</th>
+    <th>Email</th>
+    <th>Phone</th>
+    <th>Date of Birth</th>
+  </tr>
+  {% for customer in customers %}
+  <tr>
+    <td>{{ customer.customerid }}</td>
+    <td>{{ customer.firstname }}</td>
+    <td>{{ customer.familyname }}</td>
+    <td>{{ customer.email }}</td>
+    <td>{{ customer.phone }}</td>
+    <td>{{ customer.dob }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No customers available.</p>
+{% endif %} {% endblock %}

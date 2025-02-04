@@ -1,0 +1,62 @@
+{% extends "base.html" %} {% block title %}ATL - Add Booking{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-header">
+      <h2>Add New Booking</h2>
+    </div>
+    <div class="card-body">
+      {% with messages = get_flashed_messages() %} {% if messages %} {% for
+      message in messages %}
+      <div class="alert alert-info">{{ message }}</div>
+      {% endfor %} {% endif %} {% endwith %}
+
+      <form
+        method="POST"
+        action="{{ url_for('makebooking') }}"
+        class="needs-validation"
+        novalidate
+      >
+        <div class="mb-3">
+          <label for="customerid" class="form-label">Select Customer</label>
+          <select
+            class="form-select"
+            id="customerid"
+            name="customerid"
+            required
+          >
+            <option value="" selected disabled>Choose a customer...</option>
+            {% for customer in customers %}
+            <option value="{{ customer.customerid }}">
+              {{ customer.familyname }}, {{ customer.firstname }}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="invalid-feedback">Please select a customer.</div>
+        </div>
+
+        <div class="mb-3">
+          <label for="tourgroupid" class="form-label">Select Tour</label>
+          <select
+            class="form-select"
+            id="tourgroupid"
+            name="tourgroupid"
+            required
+          >
+            <option value="" selected disabled>Choose a tour...</option>
+            {% for tourgroup in tourgroups %}
+            <option value="{{ tourgroup.tourgroupid }}">
+              {{ tourgroup.tourname }} - {{ tourgroup.startdate }}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="invalid-feedback">Please select a tour.</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Add Booking</button>
+        <a href="{{ url_for('home') }}" class="btn btn-secondary">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

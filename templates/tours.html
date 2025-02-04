@@ -1,0 +1,28 @@
+<!-- templates/tours.html -->
+{% extends "base.html" %} {% block content %}
+<h2>Tours</h2>
+{% if error %}
+<p style="color: red">{{ error }}</p>
+{% endif %} {% if tours %}
+<form method="post">
+  <label for="tourid">Select a Tour:</label>
+  <select name="tourid" id="tourid">
+    {% for tour in tours %}
+    <option value="{{ tour.tourid }}">{{ tour.tourname }}</option>
+    {% endfor %}
+  </select>
+  <input type="submit" value="View Tour Groups" />
+</form>
+{% endif %} {% if tourgroups %}
+<h3>Tour Groups for Tour ID {{ tourid }}</h3>
+<form action="{{ url_for('tourlist') }}" method="post">
+  <input type="hidden" name="tourid" value="{{ tourid }}" />
+  <label for="tourgroupid">Select a Tour Group (Start Date):</label>
+  <select name="tourgroupid" id="tourgroupid">
+    {% for group in tourgroups %}
+    <option value="{{ group.tourgroupid }}">{{ group.startdate }}</option>
+    {% endfor %}
+  </select>
+  <input type="submit" value="View Customers" />
+</form>
+{% endif %} {% endblock %}
