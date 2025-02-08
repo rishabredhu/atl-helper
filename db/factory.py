@@ -1,94 +1,95 @@
 # db/factory.py
 import mysql.connector
-from flask import current_app, g
-import sqlite3
+from mysql.connector import Error
+import time
+import os
+from flask import g
 
-
-
-def initialize_db():
-    try:
-        db_type = current_app.config.get('DB_TYPE', 'sqlite')  # Default to sqlite if not specified
-
-        if db_type == 'mysql':
-            connection = mysql.connector.connect(
-                host=current_app.config['DB_HOST'],
-                user=current_app.config['DB_USER'],
-                password=current_app.config['DB_PASSWORD'],
-                database=current_app.config['DB_NAME']
-            )
-            current_app.logger.info("Successfully connected to MySQL database.")
-        
-        elif db_type == 'sqlite':
-            connection = sqlite3.connect(current_app.config['DATABASE'])
-            current_app.logger.info("Successfully connected to SQLite database.")
-        
-        else:
-            raise ValueError(f"Unsupported database type: {db_type}")
-        
-        return connection
-
-    except mysql.connector.Error as err:
-        current_app.logger.error(f"Database connection failed: {err}")
-        raise
-    except sqlite3.Error as err:
-        current_app.logger.error(f"SQLite connection failed: {err}")
-        raise
-    except Exception as e:
-        current_app.logger.error(f"Error creating database: {e}")
-        raise
-
-
-
-# Factory class to get the database - What is this for? 
 class DatabaseFactory:
     @staticmethod
-    def get_database():
-        connection = initialize_db()
-        db_type = current_app.config.get('DB_TYPE', 'sqlite')
-        
-        if db_type == 'sqlite':
-            return SQLiteDatabase(connection)
-        elif db_type == 'mysql':
-            return MySQLDatabase(connection)
-        else:
-            raise ValueError(f"Unsupported database type: {db_type}")
-        
+    def wait_for_db(max_retries=30, delay=1):
+        """Wait for database to become available"""
+        retries = 0
+        while retries < max_retries:
+            try:
+                conn = mysql.connector.connect(
+                    host=os.getenv('MYSQL_HOST', 'db'),
+                    user=os.getenv('MYSQL_USER', 'atluser'),
+                    password=os.getenv('MYSQL_PASSWORD', 'atlpass'),
+                    database=os.getenv('MYSQL_DATABASE', 'atl')
+                )
+                conn.close()
+                print("Database is available!")
+                return True
+            except Error as e:
+                print(f"Database unavailable, waiting... (Attempt {retries + 1}/{max_retries})")
+                retries += 1
+                time.sleep(delay)
+        return False
+
     @staticmethod
+    def init_db():
+        """Initialize the database with schema and initial data"""
+        if not DatabaseFactory.wait_for_db():
+            raise Exception("Database connection timeout")
+
+        conn = mysql.connector.connect(
+            host=os.getenv('MYSQL_HOST', 'db'),
+            user=os.getenv('MYSQL_USER', 'atluser'),
+            password=os.getenv('MYSQL_PASSWORD', 'atlpass'),
+            database=os.getenv('MYSQL_DATABASE', 'atl')
+        )
+        cursor = conn.cursor()
+
+        try:
+            # Execute schema creation
+            with open('db/schema.sql', 'r') as f:
+                schema_sql = f.read()
+                for statement in schema_sql.split(';'):
+                    if statement.strip():
+                        cursor.execute(statement)
+            
+            # Execute initial data insertion
+            with open('db/data.sql', 'r') as f:
+                data_sql = f.read()
+                for statement in data_sql.split(';'):
+                    if statement.strip():
+                        cursor.execute(statement)
+            
+            conn.commit()
+            print("Database initialized successfully!")
+        except Exception as e:
+            conn.rollback()
+            print(f"Error initializing database: {e}")
+            raise
+        finally:
+            cursor.close()
+            conn.close()
+
+    @staticmethod
+    def get_db():
+        """Get database connection"""
+        if 'db' not in g:
+            g.db = mysql.connector.connect(
+                host=os.getenv('MYSQL_HOST', 'db'),
+                user=os.getenv('MYSQL_USER', 'atluser'),
+                password=os.getenv('MYSQL_PASSWORD', 'atlpass'),
+                database=os.getenv('MYSQL_DATABASE', 'atl')
+            )
+        return g.db
+
+def init_app(app):
+    """Initialize the database with the Flask app"""
+    @app.before_first_request
+    def init_database():
+        DatabaseFactory.wait_for_db()
+
+    @app.teardown_appcontext
     def close_db(e=None):
-        if 'db' in g:
-            g.db.close()
-            g.pop('db', None)
+        db = g.pop('db', None)
+        if db is not None:
+            db.close()
 
-class Database:
-    def __init__(self, connection):
-        self.connection = connection
-
-    def get_connection(self):
-        raise NotImplementedError("Subclasses must implement get_connection()")
-    
-    def close_connection(self, connection):
-        raise NotImplementedError("Subclasses must implement close_connection()")
-
-class MySQLDatabase(Database):
-    def get_connection(self):
-        return self.connection
-    
-    def close_connection(self, connection):
-        if connection is not None:
-            try:
-                connection.close()
-                current_app.logger.info("MySQL connection closed successfully.")
-            except mysql.connector.Error as err:
-                current_app.logger.error(f"Error closing MySQL connection: {err}")
-
-class SQLiteDatabase(Database):
-    def get_connection(self):
-        return self.connection
-    
-    def close_connection(self, connection):
-        if connection is not None:
-            try:
-                connection.close()
-                current_app.logger.info("SQLite connection closed successfully.")
-            except sqlite3.Error as err:
-                current_app.logger.error(f"Error closing SQLite connection: {err}")
+# Create an instance of the database factory
+def get_db():
+    return DatabaseFactory.get_db()

@@ -1,0 +1,24 @@
+<!-- app/templates/tourlist.html -->
+{% extends "base.html" %} {% block content %}
+<div class="card">
+  <div class="card-header">
+    <h2>{{ tour_group.tour_name }}</h2>
+    <h4>Start Date: {{ tour_group.start_date.strftime('%d %B %Y') }}</h4>
+  </div>
+  <div class="card-body">
+    <div class="list-group">
+      {% for customer in customers %}
+      <a
+        href="{{ url_for('customers.customer_booking_overview', customer_id=customer.customerid) }}"
+        class="list-group-item list-group-item-action"
+      >
+        {{ customer.familyname }}, {{ customer.firstname }}
+        <small class="text-muted"
+          >(DOB: {{ customer.dob.strftime('%d/%m/%Y') }})</small
+        >
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

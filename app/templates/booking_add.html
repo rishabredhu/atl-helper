@@ -1,0 +1,206 @@
+<!-- app/templates/booking_add.html -->
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-5">
+          <div class="text-center mb-5">
+            <div class="display-6 fw-bold mb-3">Book a Tour</div>
+            <p class="text-muted">
+              Complete the form below to book your adventure
+            </p>
+          </div>
+
+          <form method="POST" class="needs-validation" novalidate>
+            <div class="row g-4">
+              <div class="col-md-12">
+                <div class="form-floating mb-3">
+                  <select
+                    class="form-select"
+                    id="tour_id"
+                    name="tour_id"
+                    required
+                  >
+                    <option value="" selected disabled>Select a tour</option>
+                    {% for tour in tours %}
+                    <option value="{{ tour.id }}" data-price="{{ tour.price }}">
+                      {{ tour.name }} - ${{ "%.2f"|format(tour.price) }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  <label for="tour_id">Select Tour</label>
+                  <div class="invalid-feedback">Please select a tour.</div>
+                </div>
+              </div>
+
+              <div class="col-md-12">
+                <div class="form-floating mb-3">
+                  <select
+                    class="form-select"
+                    id="customer_id"
+                    name="customer_id"
+                    required
+                  >
+                    <option value="" selected disabled>
+                      Select a customer
+                    </option>
+                    {% for customer in customers %}
+                    <option value="{{ customer.id }}">
+                      {{ customer.first_name }} {{ customer.family_name }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  <label for="customer_id">Select Customer</label>
+                  <div class="invalid-feedback">Please select a customer.</div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="start_date"
+                    name="start_date"
+                    required
+                  />
+                  <label for="start_date">Start Date</label>
+                  <div class="invalid-feedback">
+                    Please select a start date.
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="form-floating mb-3">
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="participants"
+                    name="participants"
+                    min="1"
+                    value="1"
+                    required
+                  />
+                  <label for="participants">Number of Participants</label>
+                  <div class="invalid-feedback">
+                    Please enter the number of participants.
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card bg-light border-0 mb-3">
+                  <div class="card-body">
+                    <h5 class="card-title">Booking Summary</h5>
+                    <div class="row">
+                      <div class="col-md-6">
+                        <p class="mb-1">
+                          Tour Price: <span id="tourPrice">$0.00</span>
+                        </p>
+                        <p class="mb-1">
+                          Participants: <span id="participantCount">1</span>
+                        </p>
+                      </div>
+                      <div class="col-md-6 text-md-end">
+                        <p class="h4">
+                          Total: <span id="totalPrice">$0.00</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="form-check mb-3">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="terms"
+                    name="terms"
+                    required
+                  />
+                  <label class="form-check-label" for="terms">
+                    I agree to the
+                    <a href="#" class="text-decoration-none"
+                      >terms and conditions</a
+                    >
+                  </label>
+                  <div class="invalid-feedback">
+                    You must agree to the terms and conditions.
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="d-grid gap-2">
+                  <button type="submit" class="btn btn-primary btn-lg">
+                    Confirm Booking <i class="bi bi-check-circle ms-2"></i>
+                  </button>
+                  <a
+                    href="{{ url_for('main.tours') }}"
+                    class="btn btn-outline-secondary"
+                  >
+                    Cancel
+                  </a>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Form validation
+  (function () {
+    "use strict";
+    const forms = document.querySelectorAll(".needs-validation");
+    Array.from(forms).forEach((form) => {
+      form.addEventListener(
+        "submit",
+        (event) => {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add("was-validated");
+        },
+        false
+      );
+    });
+  })();
+
+  // Calculate total price
+  function updatePrice() {
+    const tourSelect = document.getElementById("tour_id");
+    const participantsInput = document.getElementById("participants");
+    const tourPriceSpan = document.getElementById("tourPrice");
+    const participantCountSpan = document.getElementById("participantCount");
+    const totalPriceSpan = document.getElementById("totalPrice");
+
+    const selectedOption = tourSelect.options[tourSelect.selectedIndex];
+    const price = selectedOption ? parseFloat(selectedOption.dataset.price) : 0;
+    const participants = parseInt(participantsInput.value) || 1;
+
+    tourPriceSpan.textContent = `$${price.toFixed(2)}`;
+    participantCountSpan.textContent = participants;
+    totalPriceSpan.textContent = `$${(price * participants).toFixed(2)}`;
+  }
+
+  document.getElementById("tour_id").addEventListener("change", updatePrice);
+  document
+    .getElementById("participants")
+    .addEventListener("input", updatePrice);
+
+  // Set minimum date for start date (tomorrow)
+  const startDateInput = document.getElementById("start_date");
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  startDateInput.min = tomorrow.toISOString().split("T")[0];
+</script>
+{% endblock %}

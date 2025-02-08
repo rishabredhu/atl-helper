@@ -1,0 +1,62 @@
+<!-- app/templates/home.html -->
+{% extends "base.html" %} {% block content %}
+<div class="hero-section text-center py-5">
+  <div class="container">
+    <h1 class="display-4 fw-bold mb-4">Welcome to Adventure Travel</h1>
+    <p class="lead mb-5">
+      Discover extraordinary destinations and create unforgettable memories with
+      us.
+    </p>
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <img
+          src="{{ url_for('static', filename='images/your-home-image.jpg') }}"
+          alt="Adventure Image"
+          class="img-fluid rounded-3 shadow-lg mb-5"
+          style="max-height: 500px; object-fit: cover; width: 100%"
+        />
+      </div>
+    </div>
+    <div class="row g-4 mt-3">
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body">
+            <i class="bi bi-compass display-4 text-primary mb-3"></i>
+            <h3 class="h4">Explore</h3>
+            <p class="text-muted">
+              Discover breathtaking destinations around the world.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body">
+            <i class="bi bi-people display-4 text-primary mb-3"></i>
+            <h3 class="h4">Experience</h3>
+            <p class="text-muted">
+              Join like-minded adventurers on guided tours.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body">
+            <i class="bi bi-heart display-4 text-primary mb-3"></i>
+            <h3 class="h4">Enjoy</h3>
+            <p class="text-muted">
+              Create lasting memories with premium experiences.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-5">
+      <a href="{{ url_for('main.tours') }}" class="btn btn-primary btn-lg px-5">
+        Explore Tours <i class="bi bi-arrow-right ms-2"></i>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

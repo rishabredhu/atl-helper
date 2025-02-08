@@ -1,81 +1,277 @@
-
+# app/routes/customers.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from db.factory import get_db
+from datetime import datetime
+import re
 
-main_bp= Blueprint('main', __name__)
-@main_bp.route('/customers/search', methods=['GET'])
+customers_bp = Blueprint('customers', __name__)
+
+def validate_email(email):
+    if not email:
+        return True
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+def validate_phone(phone):
+    if not phone:
+        return True
+    pattern = r'^\+?[0-9]{10,12}$'
+    return re.match(pattern, phone) is not None
+
+@customers_bp.route('/customers/search', methods=['GET'])
 def customer_search():
+    """
+    Requirement 5: Customer search functionality
+    - Shows family name, first name, and contact details
+    - Results are clickable for booking overview
+    """
     query = request.args.get('q', '')
     results = []
     if query:
         db = get_db()
         cursor = db.cursor(dictionary=True)
-        # Use wildcard matching on family name or first name
-        sql = "SELECT * FROM customers WHERE family_name LIKE %s OR first_name LIKE %s"
+        sql = """
+            SELECT customerid, firstname, familyname, email, phone 
+            FROM customers 
+            WHERE familyname LIKE %s OR firstname LIKE %s
+            ORDER BY familyname ASC, firstname ASC
+        """
         like_query = f"%{query}%"
-        cursor.execute(sql, (like_query, like_query))
-        results = cursor.fetchall()
+        try:
+            cursor.execute(sql, (like_query, like_query))
+            results = cursor.fetchall()
+        except Exception as e:
+            flash(f"Search error: {str(e)}", 'error')
+        finally:
+            cursor.close()
     return render_template('customers.html', results=results, query=query)
 
-@main_bp.route('/customers/add', methods=['GET', 'POST'])
+@customers_bp.route('/customers/add', methods=['GET', 'POST'])
 def customer_add():
+    """
+    Requirement 6: Add customer functionality with validation
+    """
     if request.method == 'POST':
-        first_name = request.form.get('first_name')
-        family_name = request.form.get('family_name')
-        date_of_birth = request.form.get('date_of_birth')
-        contact_details = request.form.get('contact_details')
+        firstname = request.form.get('firstname', '').strip()
+        familyname = request.form.get('familyname', '').strip()
+        dob = request.form.get('dob')
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
         
-        # Validate data here and flash errors if needed
+        errors = []
+        if not firstname or not familyname:
+            errors.append("First name and family name are required")
+        if not dob:
+            errors.append("Date of birth is required")
+        if not email and not phone:
+            errors.append("Either email or phone is required")
+        if email and not validate_email(email):
+            errors.append("Please enter a valid email address")
+        if phone and not validate_phone(phone):
+            errors.append("Please enter a valid phone number")
         
-        db = get_db()
-        cursor = db.cursor()
+        if errors:
+            for error in errors:
+                flash(error, 'error')
+            return render_template('customers_add.html', 
+                                firstname=firstname,
+                                familyname=familyname,
+                                dob=dob,
+                                email=email,
+                                phone=phone)
+        
         try:
+            db = get_db()
+            cursor = db.cursor()
             cursor.execute(
-                "INSERT INTO customers (first_name, family_name, date_of_birth, contact_details) VALUES (%s, %s, %s, %s)",
-                (first_name, family_name, date_of_birth, contact_details)
+                """INSERT INTO customers 
+                   (firstname, familyname, dob, email, phone) 
+                   VALUES (%s, %s, %s, %s, %s)""",
+                (firstname, familyname, dob, email, phone)
             )
             db.commit()
-            flash("Customer added successfully!")
-            # Redirect to customer booking overview (using the new customer's ID)
             new_id = cursor.lastrowid
-            return redirect(url_for('main.customer_booking_overview', customer_id=new_id))
+            flash("Customer added successfully!")
+            return redirect(url_for('customers.customer_booking_overview', customer_id=new_id))
         except Exception as e:
             db.rollback()
-            flash("Error adding customer.")
-    return render_template('customer_add.html')
+            flash(f"Error adding customer: {str(e)}", 'error')
+        finally:
+            cursor.close()
+            
+    return render_template('customers_add.html')
 
-
-@main_bp.route('/customers/<int:customer_id>')
-def customer_booking_overview(customer_id):
+@customers_bp.route('/tourgroup/<int:tourgroup_id>/customers')
+def tourgroup_customers(tourgroup_id):
+    """
+    Requirement 3: Display customers in a tour group
+    - Shows tour name and start date
+    - Lists customers alphabetically by family name
+    - Sub-sorted by DOB (youngest first)
+    - Clickable customer names
+    """
     db = get_db()
     cursor = db.cursor(dictionary=True)
     
-    # Get customer details
-    cursor.execute("SELECT * FROM customers WHERE id = %s", (customer_id,))
-    customer = cursor.fetchone()
-    if not customer:
-        flash("Customer not found.")
+    try:
+        # Get tour group details
+        cursor.execute("""
+            SELECT tg.tourgroupid, tg.startdate, t.tourname
+            FROM tourgroups tg 
+            JOIN tours t ON tg.tourid = t.tourid
+            WHERE tg.tourgroupid = %s
+        """, (tourgroup_id,))
+        tourgroup = cursor.fetchone()
+        
+        if not tourgroup:
+            flash("Tour group not found")
+            return redirect(url_for('main.tours'))
+        
+        # Get customers in the tour group
+        cursor.execute("""
+            SELECT c.customerid, c.firstname, c.familyname, c.dob
+            FROM customers c
+            JOIN tourbookings tb ON c.customerid = tb.customerid
+            WHERE tb.tourgroupid = %s
+            ORDER BY c.familyname ASC, c.dob DESC
+        """, (tourgroup_id,))
+        customers = cursor.fetchall()
+        
+        return render_template('tourlist.html', 
+                             tourgroup=tourgroup,
+                             customers=customers)
+    except Exception as e:
+        flash(f"Error retrieving tour group details: {str(e)}", 'error')
+        return redirect(url_for('main.tours'))
+    finally:
+        cursor.close()
+
+@customers_bp.route('/customers/<int:customer_id>')
+def customer_booking_overview(customer_id):
+    """
+    Requirement 8: Customer booking overview
+    - Shows customer name and total destinations
+    - Lists all bookings with tour details
+    - Categorizes bookings as past/current/future
+    """
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    
+    try:
+        # Get customer details
+        cursor.execute("""
+            SELECT customerid, firstname, familyname, dob, email, phone 
+            FROM customers 
+            WHERE customerid = %s
+        """, (customer_id,))
+        customer = cursor.fetchone()
+        
+        if not customer:
+            flash("Customer not found")
+            return redirect(url_for('main.home'))
+        
+        # Get all bookings with destination counts
+        cursor.execute("""
+            SELECT 
+                tb.bookingid,
+                tg.startdate,
+                t.tourname,
+                (SELECT COUNT(*) FROM itineraries i WHERE i.tourid = t.tourid) as destination_count
+            FROM tourbookings tb
+            JOIN tourgroups tg ON tb.tourgroupid = tg.tourgroupid
+            JOIN tours t ON tg.tourid = t.tourid
+            WHERE tb.customerid = %s
+            ORDER BY tg.startdate DESC
+        """, (customer_id,))
+        bookings = cursor.fetchall()
+        
+        # Process bookings
+        total_destinations = 0
+        current_date = datetime.now().date()
+        
+        for booking in bookings:
+            total_destinations += booking['destination_count']
+            booking['formatted_date'] = booking['startdate'].strftime('%d %B %Y')
+            if booking['startdate'] < current_date:
+                booking['status'] = 'past'
+            elif booking['startdate'] == current_date:
+                booking['status'] = 'current'
+            else:
+                booking['status'] = 'future'
+        
+        return render_template('customer_overview.html',
+                             customer=customer,
+                             bookings=bookings,
+                             total_destinations=total_destinations)
+    except Exception as e:
+        flash(f"Error retrieving customer details: {str(e)}", 'error')
         return redirect(url_for('main.home'))
+    finally:
+        cursor.close()
+
+@customers_bp.route('/customers/<int:customer_id>/edit', methods=['GET', 'POST'])
+def customer_edit(customer_id):
+    """
+    Requirement 7: Edit customer information
+    """
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
     
-    # Get all bookings for the customer (including past, current, future)
-    cursor.execute("""
-        SELECT b.*, tg.start_date, t.name AS tour_name, t.itinerary
-        FROM bookings b 
-        JOIN tour_groups tg ON b.tour_group_id = tg.id 
-        JOIN tours t ON tg.tour_id = t.id 
-        WHERE b.customer_id = %s
-        ORDER BY tg.start_date DESC
-    """, (customer_id,))
-    bookings = cursor.fetchall()
+    if request.method == 'GET':
+        try:
+            cursor.execute(
+                "SELECT * FROM customers WHERE customerid = %s",
+                (customer_id,)
+            )
+            customer = cursor.fetchone()
+            
+            if not customer:
+                flash("Customer not found")
+                return redirect(url_for('main.home'))
+                
+            return render_template('customer_edit.html', customer=customer)
+        except Exception as e:
+            flash(f"Error retrieving customer details: {str(e)}", 'error')
+            return redirect(url_for('main.home'))
+        finally:
+            cursor.close()
     
-    total_destinations = 0
-    for booking in bookings:
-        # Assuming itinerary is stored as a comma-separated string.
-        destinations = [d.strip() for d in booking['itinerary'].split(',') if d.strip()]
-        booking['destination_count'] = len(destinations)
-        total_destinations += len(destinations)
-    
-    return render_template('tour_details.html',
-                           customer=customer,
-                           bookings=bookings,
-                           total_destinations=total_destinations)
+    elif request.method == 'POST':
+        firstname = request.form.get('firstname', '').strip()
+        familyname = request.form.get('familyname', '').strip()
+        dob = request.form.get('dob')
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        
+        errors = []
+        if not firstname or not familyname:
+            errors.append("First name and family name are required")
+        if not dob:
+            errors.append("Date of birth is required")
+        if not email and not phone:
+            errors.append("Either email or phone is required")
+        
+        if errors:
+            for error in errors:
+                flash(error, 'error')
+            return redirect(url_for('customers.customer_edit', customer_id=customer_id))
+        
+        try:
+            cursor.execute("""
+                UPDATE customers 
+                SET firstname = %s, 
+                    familyname = %s, 
+                    dob = %s, 
+                    email = %s, 
+                    phone = %s
+                WHERE customerid = %s
+                """, (firstname, familyname, dob, email, phone, customer_id))
+            db.commit()
+            flash("Customer updated successfully!")
+            return redirect(url_for('customers.customer_booking_overview', customer_id=customer_id))
+        except Exception as e:
+            db.rollback()
+            flash(f"Error updating customer: {str(e)}", 'error')
+            return redirect(url_for('customers.customer_edit', customer_id=customer_id))
+        finally:
+            cursor.close()

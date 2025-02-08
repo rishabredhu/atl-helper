@@ -1,29 +1,33 @@
-version: '3.8'
+version: "3.8"
+
 services:
   web:
     build: .
     ports:
-      - "5000:5000"
-    environment:
-      - DB_HOST=db  # Important: This points to the db service
-      - DB_USER=root
-      - DB_PASSWORD=root
-      - DB_NAME=atl
+      - "5001:5000"
     volumes:
       - .:/app
+    environment:
+      - FLASK_ENV=development
+      - MYSQL_HOST=db
+      - MYSQL_USER=atluser
+      - MYSQL_PASSWORD=atlpass
+      - MYSQL_DATABASE=atl
     depends_on:
       - db
 
   db:
     image: mysql:8.0
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: atl
+      MYSQL_USER: atluser
+      MYSQL_PASSWORD: atlpass
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/mysql
 
 volumes:
-  mysql_data:
+  db_data:
