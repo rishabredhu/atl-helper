@@ -2,3 +2,5 @@
 connect.py
 /.env
 .sql
+/venv
+
