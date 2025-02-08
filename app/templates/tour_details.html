@@ -1,24 +1,27 @@
-<!-- app/templates/tourlist.html -->
 {% extends "base.html" %} {% block content %}
-<div class="card">
-  <div class="card-header">
-    <h2>{{ tour_group.tour_name }}</h2>
-    <h4>Start Date: {{ tour_group.start_date.strftime('%d %B %Y') }}</h4>
-  </div>
-  <div class="card-body">
-    <div class="list-group">
-      {% for customer in customers %}
-      <a
-        href="{{ url_for('customers.customer_booking_overview', customer_id=customer.customerid) }}"
-        class="list-group-item list-group-item-action"
-      >
-        {{ customer.familyname }}, {{ customer.firstname }}
-        <small class="text-muted"
-          >(DOB: {{ customer.dob.strftime('%d/%m/%Y') }})</small
-        >
-      </a>
-      {% endfor %}
+<div class="container">
+  <h2>{{ tour.name }}</h2>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5>Tour Details</h5>
+      <p>Tour ID: {{ tour.id }}</p>
+      {% if tour.agerestriction > 0 %}
+      <p>Age Restriction: {{ tour.agerestriction }}+</p>
+      {% endif %}
+
+      <h5>Available Start Dates:</h5>
+      {% if tour.available_dates %} {% for date in
+      tour.available_dates.split(',') %}
+      <p>{{ date }}</p>
+      {% endfor %} {% else %}
+      <p>No upcoming dates available</p>
+      {% endif %}
     </div>
   </div>
+
+  <a href="{{ url_for('main.tours') }}" class="btn btn-primary"
+    >Back to Tours</a
+  >
 </div>
 {% endblock %}

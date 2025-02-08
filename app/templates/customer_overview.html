@@ -1,0 +1,135 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  <div class="row mb-4">
+    <div class="col">
+      <h2>Customer Booking Overview</h2>
+      <div class="card">
+        <div class="card-body">
+          <h3>{{ customer.firstname }} {{ customer.familyname }}</h3>
+          <p><strong>Email:</strong> {{ customer.email or 'Not provided' }}</p>
+          <p><strong>Phone:</strong> {{ customer.phone or 'Not provided' }}</p>
+          <p>
+            <strong>Total Tour Destinations:</strong> {{ total_destinations }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Future Bookings -->
+  <div class="row mb-4">
+    <div class="col">
+      <h3>Future Bookings</h3>
+      {% set future_bookings = bookings|selectattr('status', 'equalto',
+      'future')|list %} {% if future_bookings %}
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Tour Name</th>
+              <th>Departure Date</th>
+              <th>Destinations</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for booking in future_bookings %}
+            <tr>
+              <td>{{ booking.tourname }}</td>
+              <td>{{ booking.formatted_date }}</td>
+              <td>{{ booking.destination_count }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p>No future bookings</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Current Bookings -->
+  <div class="row mb-4">
+    <div class="col">
+      <h3>Current Bookings</h3>
+      {% set current_bookings = bookings|selectattr('status', 'equalto',
+      'current')|list %} {% if current_bookings %}
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Tour Name</th>
+              <th>Departure Date</th>
+              <th>Destinations</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for booking in current_bookings %}
+            <tr>
+              <td>{{ booking.tourname }}</td>
+              <td>{{ booking.formatted_date }}</td>
+              <td>{{ booking.destination_count }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p>No current bookings</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Past Bookings -->
+  <div class="row mb-4">
+    <div class="col">
+      <h3>Past Bookings</h3>
+      {% set past_bookings = bookings|selectattr('status', 'equalto',
+      'past')|list %} {% if past_bookings %}
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Tour Name</th>
+              <th>Departure Date</th>
+              <th>Destinations</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for booking in past_bookings %}
+            <tr>
+              <td>{{ booking.tourname }}</td>
+              <td>{{ booking.formatted_date }}</td>
+              <td>{{ booking.destination_count }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p>No past bookings</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <a
+        href="{{ url_for('customers.customer_search') }}"
+        class="btn btn-primary"
+        >Back to Customer Search</a
+      >
+    </div>
+  </div>
+</div>
+
+<style>
+  .table th,
+  .table td {
+    vertical-align: middle;
+  }
+  .card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+</style>
+{% endblock %}

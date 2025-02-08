@@ -1,6 +1,6 @@
 {% extends "base.html" %} {% block content %}
 <div class="container">
-  <h2 class="mb-4">Add New Customer</h2>
+  <h2 class="mb-4">Edit Customer</h2>
 
   <form method="POST" class="needs-validation" novalidate>
     <div class="mb-3">
@@ -10,7 +10,7 @@
         class="form-control"
         id="firstname"
         name="firstname"
-        value="{{ firstname or '' }}"
+        value="{{ customer.firstname }}"
         required
       />
     </div>
@@ -22,7 +22,7 @@
         class="form-control"
         id="familyname"
         name="familyname"
-        value="{{ familyname or '' }}"
+        value="{{ customer.familyname }}"
         required
       />
     </div>
@@ -34,7 +34,7 @@
         class="form-control"
         id="dob"
         name="dob"
-        value="{{ dob or '' }}"
+        value="{{ customer.dob.strftime('%Y-%m-%d') }}"
         required
       />
     </div>
@@ -46,7 +46,7 @@
         class="form-control"
         id="email"
         name="email"
-        value="{{ email or '' }}"
+        value="{{ customer.email or '' }}"
       />
       <div class="form-text">Either email or phone is required</div>
     </div>
@@ -58,13 +58,13 @@
         class="form-control"
         id="phone"
         name="phone"
-        value="{{ phone or '' }}"
+        value="{{ customer.phone or '' }}"
       />
     </div>
 
-    <button type="submit" class="btn btn-primary">Add Customer</button>
+    <button type="submit" class="btn btn-primary">Update Customer</button>
     <a
-      href="{{ url_for('customers.customer_search') }}"
+      href="{{ url_for('customers.customer_booking_overview', customer_id=customer.customerid) }}"
       class="btn btn-secondary"
       >Cancel</a
     >

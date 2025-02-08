@@ -1,0 +1,50 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  <h2 class="mb-4">Tour Group Details</h2>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h3>{{ tourgroup.tourname }}</h3>
+      <p>Start Date: {{ tourgroup.startdate.strftime('%d %B %Y') }}</p>
+    </div>
+  </div>
+
+  <h3>Customer List</h3>
+  {% if customers %}
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Family Name</th>
+          <th>First Name</th>
+          <th>Date of Birth</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for customer in customers %}
+        <tr>
+          <td>{{ customer.familyname }}</td>
+          <td>{{ customer.firstname }}</td>
+          <td>{{ customer.dob.strftime('%d %B %Y') }}</td>
+          <td>
+            <a
+              href="{{ url_for('customers.customer_booking_overview', customer_id=customer.customerid) }}"
+              class="btn btn-sm btn-info"
+              >View Details</a
+            >
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p>No customers found in this tour group.</p>
+  {% endif %}
+
+  <a href="{{ url_for('main.tours') }}" class="btn btn-primary"
+    >Back to Tours</a
+  >
+</div>
+{% endblock %}

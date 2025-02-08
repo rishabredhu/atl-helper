@@ -275,3 +275,43 @@ def customer_edit(customer_id):
             return redirect(url_for('customers.customer_edit', customer_id=customer_id))
         finally:
             cursor.close()
+
+
+
+            
+            # Add this route to app/routes/customers.py
+
+@customers_bp.route('/customers/<int:customer_id>/delete', methods=['GET'])
+def customer_delete(customer_id):
+    """Delete a customer after checking for existing bookings"""
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    
+    try:
+        # First check if customer has any bookings
+        cursor.execute("""
+            SELECT COUNT(*) as booking_count 
+            FROM tourbookings 
+            WHERE customerid = %s
+        """, (customer_id,))
+        result = cursor.fetchone()
+        
+        if result['booking_count'] > 0:
+            flash("Cannot delete customer with existing bookings.")
+            return redirect(url_for('customers.customer_search'))
+        
+        # If no bookings, proceed with deletion
+        cursor.execute(
+            "DELETE FROM customers WHERE customerid = %s",
+            (customer_id,)
+        )
+        db.commit()
+        flash("Customer deleted successfully!")
+        
+    except Exception as e:
+        db.rollback()
+        flash(f"Error deleting customer: {str(e)}")
+    finally:
+        cursor.close()
+    
+    return redirect(url_for('customers.customer_search'))

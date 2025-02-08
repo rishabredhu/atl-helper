@@ -1,62 +1,62 @@
 
--- CREATE TABLE tours (
---     tourid INT NOT NULL AUTO_INCREMENT,
---     tourname VARCHAR(50) NOT NULL,
---     agerestriction int not null,
---     PRIMARY KEY (tourid)
--- );
+CREATE TABLE tours (
+    tourid INT NOT NULL AUTO_INCREMENT,
+    tourname VARCHAR(50) NOT NULL,
+    agerestriction int not null,
+    PRIMARY KEY (tourid)
+);
 
--- CREATE TABLE customers (
--- 	customerid INT NOT NULL AUTO_INCREMENT,
---     firstname VARCHAR(50),
---     familyname VARCHAR(50) NOT NULL,
---     dob date,
---     email VARCHAR(320), 
---     phone VARCHAR(12),
---     PRIMARY KEY (customerid)
--- );
+CREATE TABLE customers (
+	customerid INT NOT NULL AUTO_INCREMENT,
+    firstname VARCHAR(50),
+    familyname VARCHAR(50) NOT NULL,
+    dob date,
+    email VARCHAR(320), 
+    phone VARCHAR(12),
+    PRIMARY KEY (customerid)
+);
 
--- create table destinations (
--- 	destinationid INT NOT NULL AUTO_INCREMENT,
---     destinationname VARCHAR(30) NOT NULL,
---      PRIMARY KEY (destinationid)
--- );
+create table destinations (
+	destinationid INT NOT NULL AUTO_INCREMENT,
+    destinationname VARCHAR(30) NOT NULL,
+     PRIMARY KEY (destinationid)
+);
 
--- create table itineraries (
--- 	itineraryid INT NOT NULL AUTO_INCREMENT,
---     tourid INT NOT NULL,
---     destinationid INT NOT NULL,
---       PRIMARY KEY (itineraryid),
---     CONSTRAINT fk_tourid FOREIGN KEY (tourid)
---         REFERENCES tours (tourid)
---         ON DELETE NO ACTION ON UPDATE NO ACTION,
---     CONSTRAINT fk_destinationid FOREIGN KEY (destinationid )
---         REFERENCES destinations (destinationid)
---         ON DELETE NO ACTION ON UPDATE NO ACTION
--- );
+create table itineraries (
+	itineraryid INT NOT NULL AUTO_INCREMENT,
+    tourid INT NOT NULL,
+    destinationid INT NOT NULL,
+      PRIMARY KEY (itineraryid),
+    CONSTRAINT fk_tourid FOREIGN KEY (tourid)
+        REFERENCES tours (tourid)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_destinationid FOREIGN KEY (destinationid )
+        REFERENCES destinations (destinationid)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+);
 
--- create table tourgroups (
--- 	tourgroupid INT NOT NULL AUTO_INCREMENT,
---     tourid INT,
---     startdate date,
---     PRIMARY KEY (tourgroupid),
---     CONSTRAINT fk_tourid_tourgroups FOREIGN KEY (tourid)
---         REFERENCES tours (tourid)
---         ON DELETE NO ACTION ON UPDATE NO ACTION
--- );
+create table tourgroups (
+	tourgroupid INT NOT NULL AUTO_INCREMENT,
+    tourid INT,
+    startdate date,
+    PRIMARY KEY (tourgroupid),
+    CONSTRAINT fk_tourid_tourgroups FOREIGN KEY (tourid)
+        REFERENCES tours (tourid)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+);
 
--- create table tourbookings (
--- 		bookingid INT NOT NULL AUTO_INCREMENT,
---     tourgroupid INT,
---     customerid INT,
---      PRIMARY KEY (bookingid),
---     CONSTRAINT fk_tourgroupid FOREIGN KEY (tourgroupid)
---         REFERENCES tourgroups (tourgroupid)
---         ON DELETE NO ACTION ON UPDATE NO ACTION,
---     CONSTRAINT fk_customerid FOREIGN KEY (customerid)
---         REFERENCES customers (customerid)
---         ON DELETE NO ACTION ON UPDATE NO ACTION
--- );
+create table tourbookings (
+		bookingid INT NOT NULL AUTO_INCREMENT,
+    tourgroupid INT,
+    customerid INT,
+     PRIMARY KEY (bookingid),
+    CONSTRAINT fk_tourgroupid FOREIGN KEY (tourgroupid)
+        REFERENCES tourgroups (tourgroupid)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_customerid FOREIGN KEY (customerid)
+        REFERENCES customers (customerid)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+);
 
 INSERT INTO customers (customerid, firstname, familyname, dob, email) VALUES (816, 'Simon', 'Charles', '1952-07-15', 'simon@charles.nz');
 INSERT INTO customers (customerid, firstname, familyname, dob, email) VALUES (923, 'Simone', 'Charles', '1987-09-11', 'simone.charles@kiwi.nz');

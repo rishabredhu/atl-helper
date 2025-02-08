@@ -43,14 +43,21 @@ def init_db():
 
     # Check if database already exists
     if database_exists(cursor, 'atl'):
-        print("Database 'atl' already exists. Skipping initialization.")
-        cursor.close()
-        conn.close()
-        return
+        print("Database 'atl' already exists. Re-building DB...")
+        # Drop existing database
+        cursor.execute("DROP DATABASE atl")
+        conn.commit()
+        print("Existing database dropped.")
+        # Create fresh database
+        cursor.execute("CREATE DATABASE atl") 
+        conn.commit()
+        cursor.execute("USE atl")
+        print("Created new database 'atl'.")
 
     # Execute schema creation SQL (schema.sql)
     try:
         execute_sql_file(cursor, 'db/atl-local.sql')
+        print("Schema created successfully.")
     except Exception as e:
         print("Error executing atl-local.sql:", e)
         conn.rollback()
